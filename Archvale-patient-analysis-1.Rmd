@@ -1,0 +1,126 @@
+---
+title: "Archvale Data Analysis"
+author: "Nianyu Li"
+date: "`r Sys.Date()`"
+output:
+  word_document:
+    toc: yes
+  pdf_document:
+    toc: yes
+  html_document:
+    theme: flatly
+    highlight: zenburn
+    number_sections: yes
+    toc: yes
+    toc_float: yes
+    code_folding: show
+---
+
+------------------------------------------------------------------------
+
+```{r}
+#| label: load-libraries
+#| echo: false # This option disables the printing of code (only output is displayed).
+#| message: false
+#| warning: false
+
+library(tidyverse)
+library(ggplot2)
+library(skimr)
+library(here)
+library(lubridate)
+library(janitor)
+```
+
+# Loading the data
+
+```{r}
+#| echo: false
+#| message: false
+#| warning: false
+
+patient <- read_csv(here::here("data", "patientRecord.csv")) %>% 
+  clean_names()
+glimpse(patient)
+
+appointment <- read_csv(here::here("data", "appointmentRecord.csv")) %>% 
+  clean_names()
+glimpse(appointment)
+
+chronicDisease <- read_csv(here::here("data", "chronicDiseaseRecord.csv")) %>% 
+  clean_names()
+glimpse(chronicDisease)
+```
+
+# Data Preparation
+
+Sum the number of consultations of each patients and join the table with `patient` table.
+
+```{r}
+#Count visit times of each patients
+visit_n <- 
+  appointment %>% 
+  group_by(patient_id) %>%
+  summarise(visit_n = n())
+
+#Join the table with patients record
+patients_n_visits <- 
+  left_join(x = patient,
+            y = visit_n,
+            by = "patient_id") %>% 
+  
+  #change NA to 0 for the patients who have never visited GP
+  mutate(visit_n = replace_na(visit_n,0)) %>% 
+  
+  arrange(desc(visit_n)) %>% 
+  
+  print()
+```
+
+Calculate the patient's GP frequencies to identify the frequent patients.
+
+```{r}
+
+```
+
+
+
+```{r}
+patients_frequency %>%
+
+  #summarize percentage of visits of frequent and non-frequent patients
+
+  mutate(patient_type = case_when(visits_n >= 6 ~ "Frequent(>=6)",
+                                  visits_n < 6 ~ "Non-frequent(<6)")) %>%
+
+  group_by(patient_type) %>%
+
+  summarise(pct_visit_total = sum(pct_visit),
+            pct_patient_total = sum(pct_patient)) %>%
+
+  ggplot()+
+
+  aes(x = "",
+      y = pct_visit_total,
+      fill = patient_type) +
+
+  geom_col() +
+
+  scale_fill_brewer()+
+
+  geom_text(aes(label = paste0(pct_visit_total,"%")),
+            position = position_stack(vjust = 0.5)) +
+
+  coord_polar(theta = "y")+
+
+  theme_void()+
+
+  theme(axis.ticks = element_blank(),
+        axis.text = element_blank())+
+
+  labs(title = "% of Consultation by Patient Type",
+       x = NULL, y = NULL,
+       fill = "Patient Type")
+
+```
+
