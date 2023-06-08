@@ -108,13 +108,13 @@ patients_frequency %>%
 
   #summarize percentage of visits of frequent and non-frequent patients
 
-  mutate(patient_type = case_when(visits_n >= 6 ~ "Frequent(>=6)",
-                                  visits_n < 6 ~ "Non-frequent(<6)")) %>%
+  mutate(patient_type = case_when(visit_n >= 7 ~ "Frequent(>=7)",
+                                  visit_n < 7 ~ "Non-frequent(<7)")) %>%
 
   group_by(patient_type) %>%
 
-  summarise(pct_visit_total = sum(pct_visit),
-            pct_patient_total = sum(pct_patient)) %>%
+  summarise(pct_visit_total = sum(visit_pct),
+            pct_patient_total = sum(patient_pct)) %>%
 
   ggplot()+
 
