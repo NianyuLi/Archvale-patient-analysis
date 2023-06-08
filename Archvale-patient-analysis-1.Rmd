@@ -80,10 +80,28 @@ patients_n_visits <-
 Calculate the patient's GP frequencies to identify the frequent patients.
 
 ```{r}
-
+patients_frequency <- patients_n_visits %>% 
+  
+  #group the patients by their frequencies
+  group_by(visit_n) %>% 
+  
+  #count the total number of patients and visits in each group
+  summarise(patient_n = n(),
+            visit_total_n = sum(visit_n)) %>% 
+  
+  #calculate the percentages
+  mutate(patient_pct = round(patient_n/sum(patient_n)*100,2),
+         visit_pct = round(visit_total_n/sum(visit_total_n)*100,2)) %>% 
+  
+  #calculate the cumulative percentages
+  arrange(desc(visit_n)) %>% 
+  mutate(patient_cumpct = cumsum(patient_pct),
+         visit_cumpct = cumsum(visit_pct)) %>% 
+  
+  print()
 ```
 
-
+From the cumulative percentages, we can tell that patients who visit the GP more than 7 times accounts for only about 10% of total patients, but more than 45% of the consultations. Therefore, we name this group as `Frequent` and the other as `Non-frequent`.
 
 ```{r}
 patients_frequency %>%
