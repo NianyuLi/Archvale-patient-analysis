@@ -30,6 +30,7 @@ library(skimr)
 library(here)
 library(lubridate)
 library(janitor)
+library(openxlsx)
 ```
 
 # Loading the data
@@ -99,6 +100,9 @@ patients_frequency <- patients_n_visits %>%
          visit_cumpct = cumsum(visit_pct)) %>% 
   
   print()
+
+#save the tibble as an excel
+#write.xlsx(patients_frequency, "patients_frequency.xlsx")
 ```
 
 From the cumulative percentages, we can tell that patients who visit the GP more than 7 times accounts for only about 10% of total patients, but more than 45% of the consultations. Therefore, we name this group as `Frequent` and the other as `Non-frequent`.
@@ -110,26 +114,26 @@ patients_frequency %>%
 
   mutate(patient_type = case_when(visit_n >= 7 ~ "Frequent(>=7)",
                                   visit_n < 7 ~ "Non-frequent(<7)")) %>%
-
+  
   group_by(patient_type) %>%
 
   summarise(pct_visit_total = sum(visit_pct),
             pct_patient_total = sum(patient_pct)) %>%
-
+  
   ggplot()+
 
-  aes(x = "",
+  aes(x = '',
       y = pct_visit_total,
       fill = patient_type) +
 
-  geom_col() +
+  geom_col(position = "stack") +
 
   scale_fill_brewer()+
 
   geom_text(aes(label = paste0(pct_visit_total,"%")),
             position = position_stack(vjust = 0.5)) +
 
-  coord_polar(theta = "y")+
+  coord_polar("y")+
 
   theme_void()+
 
@@ -141,4 +145,5 @@ patients_frequency %>%
        fill = "Patient Type")
 
 ```
+
 
