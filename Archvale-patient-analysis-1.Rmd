@@ -31,6 +31,7 @@ library(here)
 library(lubridate)
 library(janitor)
 library(openxlsx)
+library(waterfalls)
 ```
 
 # Loading the data
@@ -105,7 +106,7 @@ patients_frequency <- patients_n_visits %>%
 #write.xlsx(patients_frequency, "patients_frequency.xlsx")
 ```
 
-From the cumulative percentages, we can tell that patients who visit the GP more than 7 times accounts for only about 10% of total patients, but more than 45% of the consultations. Therefore, we name this group as `Frequent` and the other as `Non-frequent`.
+From the cumulative percentages, we can tell that patients who visit the GP more than 7 times account for only about 10% of total patients, but more than 45% of the consultations. Therefore, we name this group as `Frequent` and the other as `Non-frequent`.
 
 ```{r}
 patients_frequency %>%
