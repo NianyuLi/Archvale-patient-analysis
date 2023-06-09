@@ -85,22 +85,69 @@ patients_n_visits <-
 The age of the patient might affect their behaviour. As the time frame of the appoint record is not that long (only includes record of 2022-2023), we could assume the patient's age is this year minus the year of their birthday, though not 100% accurate.
 
 ```{r}
-patients_n_visits %>% 
+patients_n_visits_1 <-  patients_n_visits %>% 
   
   #convert character to date
   mutate(date_of_birth = dmy(date_of_birth)) %>% 
   
   #calculate age
-  mutate(age = year(today()) - year(date_of_birth))
+  mutate(age = year(today()) - year(date_of_birth)) %>% 
+  
+  print()
+```
+
+## Registration Cohort
+Patients who registered after March 2023 might have a different behaviour due to the implementation of a marketing campign. Create a new variable to show the registration cohort of the patients: people who registered before March 2023 are classified as in the `Old` cohort, whereas after March 2023 belongs to `New` cohort.
+
+```{r}
+patients_n_visits_2 <-  patients_n_visits_1 %>% 
+  
+  #convert character to date
+  mutate(registration_date = dmy(registration_date)) %>%
+  
+  #create a new variable to show their registration cohort
+  mutate(cohort = case_when(registration_date > "2023-03-01" ~ "New",
+                            registration_date < "2023-03-01" ~ "Old")) %>% 
+  
+  print()
+```
+
+## Chronic Disease
+Patients with chronic diseases visits GP regularly. Create a new variable called chronic_disease to show the number of disease the patient have.
+
+```{r}
+#convert the data to long format
+chronicDisease_1 <- chronicDisease %>% 
+  pivot_longer(cols = -"patient_id",
+               names_to = "disease",
+               values_to = "yn") %>%
+  
+  group_by(patient_id) %>% 
+  summarise(n_disease = sum(yn))
+
+patients_n_visits_3 <-
+  
+  #Join the chronic disease table with patients table
+  left_join(x = patients_n_visits_2,
+            y = chronicDisease_1,
+            by = "patient_id") %>% 
+  
+  #convert NA to 0
+  mutate(n_disease = replace_na(n_disease,0)) %>% 
+  
+  print()
+
 ```
 
 
-# Identify Frequent Patients
+# Data Analysis
+
+## Identify Frequent Patients
 
 Calculate the patient's GP frequencies to identify the frequent patients.
 
 ```{r}
-patients_frequency <- patients_n_visits %>% 
+patients_frequency <- patients_n_visits_3 %>% 
   
   #group the patients by their frequencies
   group_by(visit_n) %>% 
