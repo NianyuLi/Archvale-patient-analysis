@@ -56,6 +56,8 @@ glimpse(chronicDisease)
 
 # Data Preparation
 
+## Frequencies
+
 Sum the number of consultations of each patients and join the table with `patient` table.
 
 ```{r}
@@ -78,6 +80,22 @@ patients_n_visits <-
   
   print()
 ```
+
+## Age
+The age of the patient might affect their behaviour. As the time frame of the appoint record is not that long (only includes record of 2022-2023), we could assume the patient's age is this year minus the year of their birthday, though not 100% accurate.
+
+```{r}
+patients_n_visits %>% 
+  
+  #convert character to date
+  mutate(date_of_birth = dmy(date_of_birth)) %>% 
+  
+  #calculate age
+  mutate(age = year(today()) - year(date_of_birth))
+```
+
+
+# Identify Frequent Patients
 
 Calculate the patient's GP frequencies to identify the frequent patients.
 
@@ -147,4 +165,9 @@ patients_frequency %>%
 
 ```
 
+
+
+```{r}
+
+```
 
