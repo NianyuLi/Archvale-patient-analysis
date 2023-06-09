@@ -32,6 +32,8 @@ library(lubridate)
 library(janitor)
 library(openxlsx)
 library(waterfalls)
+library(GGally)
+library(fastDummies)
 ```
 
 # Loading the data
@@ -139,7 +141,6 @@ patients_n_visits_3 <-
 
 ```
 
-
 # Data Analysis
 
 ## Identify Frequent Patients
@@ -212,9 +213,21 @@ patients_frequency %>%
 
 ```
 
+## Testing the hypothesis
 
+Test the hypothesis: does GP frequencies have to do with Age/Gender/Chronic Disease/Registration Cohort. If there is a relationship, we might take that into consideration when we decide whether the patient has an appropriate clinical need. 
+```{r}
+patients_n_visits_3 %>% 
+  select(age, n_disease, visit_n) %>% 
+  ggpairs()
+```
 
 ```{r}
-
+patients_n_visits_3 %>% 
+  select(gender, cohort, visit_n) %>% 
+  ggpairs(aes(color = gender))
 ```
+We can tell that Age and Chronic Disease have significant positive correlations with frequency of consultations. It also varies in Gender and Registration Cohort.
+
+## Identify Inappropriate Users
 
