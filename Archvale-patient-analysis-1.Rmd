@@ -208,13 +208,6 @@ We make the following assumptions to identify the inappropriate users of GP serv
 
 2)  They are associate with potential inappropriate usage.
 
-    Features include:
-
--   Shorter average planned time;
--   Shorter Intervals between appointments;
--   General Practice;
--   Patients without chronic diseases.
-
 ## Identify Frequent Patients
 
 ### General Approach
@@ -807,14 +800,56 @@ We have a total of 142+22=164 patients. We now look at their appointment pattern
 
 ## Identify inappropriate usage
 
+Filter out the patients using the following features.
 
-### Shorter average planned time
+    Features include:
 
-### Shorter Intervals between appointments
+-   Shorter average planned time;
+-   Shorter Intervals between appointments;
 
-### General Practice
+```{r}
+# first for vulnerable patients
+patients_oldco_vul_sus <- patients_oldco_vul %>%
+  
+  # Shorter average planned time
+  filter(avg_time<quantile(avg_time, 0.5) | 
+         # Shorter Intervals between appointments
+         app_interval_int<quantile(app_interval_int, 0.5)) %>% 
+  
+  print()
+```
+Usually, the most vulnerable groups (people in under 8 and above 65 age groups and with chronic diseases) in are less likely to use GP inappropriately. So we try to filter them out.
 
-### Patients without chronic diseases?
+```{r}
+patients_oldco_vul_sus_1 <- patients_oldco_vul_sus %>% 
+  filter(age_group != "Under 8 or above 65" & n_disease == 0) %>% 
+  print()
+```
+
+```{r}
+# then for none-vulnerable patients
+patients_oldco_nonevul_sus <- patients_oldco_nonevul %>%
+  
+  # Shorter average planned time
+  filter(avg_time<quantile(avg_time, 0.5) | 
+         # Shorter Intervals between appointments
+         app_interval_int<quantile(app_interval_int, 0.5)) %>% 
+  
+  print()
+```
+
+Now we have a total of 29+17=46 patients. We merge the two tables to get the top patients that are likely to use GP appropriately.
+
+```{r}
+final_patient_list <- rbind(patients_oldco_nonevul_sus,
+                            patients_oldco_vul_sus_1) %>% 
+  print()
+
+#save the tibble as an excel
+#write.xlsx(final_patient_list, "final_patient_list.xlsx")
+
+```
+
 
 
 
