@@ -220,7 +220,7 @@ We make the following assumptions to identify the inappropriate users of GP serv
 Calculate the patient's GP frequencies to identify the frequent patients.
 
 ```{r}
-patients_frequency <- patients_n_visits_3 %>%
+patients_frequency <- patients_n_visits_5 %>%
   
   #group the patients by their frequencies
   group_by(visit_n) %>% 
@@ -244,15 +244,15 @@ patients_frequency <- patients_n_visits_3 %>%
 #write.xlsx(patients_frequency, "patients_frequency.xlsx")
 ```
 
-From the cumulative percentages, we can tell that patients who visit the GP more than 7 times account for only about 10% of total patients, but more than 45% of the consultations. Therefore, we name this group as `Frequent` and the other as `Non-frequent`.
+From the cumulative percentages, we can tell that patients who visit the GP more than 6 times account for only about 13% of total patients, but more than 50% of the consultations. Therefore, we name this group as `Frequent` and the other as `Non-frequent`.
 
 ```{r}
 patients_frequency %>%
 
   #summarize percentage of visits of frequent and non-frequent patients
 
-  mutate(patient_type = case_when(visit_n >= 7 ~ "Frequent(>=7)",
-                                  visit_n < 7 ~ "Non-frequent(<7)")) %>%
+  mutate(patient_type = case_when(visit_n >= 6 ~ "Frequent(>=6)",
+                                  visit_n < 6 ~ "Non-frequent(<6)")) %>%
   
   group_by(patient_type) %>%
 
@@ -309,4 +309,434 @@ We can tell that Age and Chronic Disease have significant positive correlations 
 People in different age/gender/registration cohort behave differently. Thus, different criteria is used to identify frequent patients.
 
 ### Gender
+
+```{r}
+#Filter data for just female
+patients_frequency_f <- patients_n_visits_5 %>%
+  
+  filter(gender == "Female") %>% 
+  
+  #group the patients by their frequencies
+  group_by(visit_n) %>% 
+  
+  #count the total number of patients and visits in each group
+  summarise(patient_n = n(),
+            visit_total_n = sum(visit_n)) %>% 
+  
+  #calculate the percentages
+  mutate(patient_pct = round(patient_n/sum(patient_n)*100,2),
+         visit_pct = round(visit_total_n/sum(visit_total_n)*100,2)) %>% 
+  
+  #calculate the cumulative percentages
+  arrange(desc(visit_n)) %>% 
+  mutate(patient_cumpct = cumsum(patient_pct),
+         visit_cumpct = cumsum(visit_pct)) %>% 
+  
+  print()
+```
+
+```{r}
+patients_frequency_f %>%
+
+  #summarize percentage of visits of frequent and non-frequent patients
+
+  mutate(patient_type = case_when(visit_n >= 7 ~ "Frequent(>=7)",
+                                  visit_n < 7 ~ "Non-frequent(<7)")) %>%
+  
+  group_by(patient_type) %>%
+
+  summarise(pct_visit_total = sum(visit_pct),
+            pct_patient_total = sum(patient_pct)) %>%
+  
+  ggplot()+
+
+  aes(x = '',
+      y = pct_visit_total,
+      fill = patient_type) +
+
+  geom_col(position = "stack") +
+
+  scale_fill_brewer()+
+
+  geom_text(aes(label = paste0(pct_visit_total,"%")),
+            position = position_stack(vjust = 0.5)) +
+
+  coord_polar("y")+
+
+  theme_void()+
+
+  theme(axis.ticks = element_blank(),
+        axis.text = element_blank())+
+
+  labs(title = "% of Consultation by Patient Type - Female",
+       x = NULL, y = NULL,
+       fill = "Patient Type")
+
+```
+
+
+```{r}
+#Filter data for just male
+patients_frequency_m <- patients_n_visits_5 %>%
+  
+  filter(gender == "Male") %>% 
+  
+  #group the patients by their frequencies
+  group_by(visit_n) %>% 
+  
+  #count the total number of patients and visits in each group
+  summarise(patient_n = n(),
+            visit_total_n = sum(visit_n)) %>% 
+  
+  #calculate the percentages
+  mutate(patient_pct = round(patient_n/sum(patient_n)*100,2),
+         visit_pct = round(visit_total_n/sum(visit_total_n)*100,2)) %>% 
+  
+  #calculate the cumulative percentages
+  arrange(desc(visit_n)) %>% 
+  mutate(patient_cumpct = cumsum(patient_pct),
+         visit_cumpct = cumsum(visit_pct)) %>% 
+  
+  print()
+```
+
+```{r}
+patients_frequency_m %>%
+
+  #summarize percentage of visits of frequent and non-frequent patients
+
+  mutate(patient_type = case_when(visit_n >= 6 ~ "Frequent(>=6)",
+                                  visit_n < 6 ~ "Non-frequent(<6)")) %>%
+  
+  group_by(patient_type) %>%
+
+  summarise(pct_visit_total = sum(visit_pct),
+            pct_patient_total = sum(patient_pct)) %>%
+  
+  ggplot()+
+
+  aes(x = '',
+      y = pct_visit_total,
+      fill = patient_type) +
+
+  geom_col(position = "stack") +
+
+  scale_fill_brewer()+
+
+  geom_text(aes(label = paste0(pct_visit_total,"%")),
+            position = position_stack(vjust = 0.5)) +
+
+  coord_polar("y")+
+
+  theme_void()+
+
+  theme(axis.ticks = element_blank(),
+        axis.text = element_blank())+
+
+  labs(title = "% of Consultation by Patient Type - Male",
+       x = NULL, y = NULL,
+       fill = "Patient Type")
+
+```
+
+### Age group
+
+```{r}
+#Assign patients to "Early_childhood(<8) and elderly(>65)" and "Others"
+
+#Create a new variable to label patients
+patients_n_visits_5 <-patients_n_visits_5 %>% 
+  mutate(age_group = case_when(age %in% (8:65) ~ "Others",
+                               !age %in% (8:65) ~ "Under 8 or above 65")) %>% 
+  print()
+```
+
+
+```{r}
+#Filter data for just "Early_childhood(<8) and elderly(>65)"
+patients_frequency_age <- patients_n_visits_5 %>%
+  
+  filter(age_group == "Under 8 or above 65") %>% 
+  
+  #group the patients by their frequencies
+  group_by(visit_n) %>% 
+  
+  #count the total number of patients and visits in each group
+  summarise(patient_n = n(),
+            visit_total_n = sum(visit_n)) %>% 
+  
+  #calculate the percentages
+  mutate(patient_pct = round(patient_n/sum(patient_n)*100,2),
+         visit_pct = round(visit_total_n/sum(visit_total_n)*100,2)) %>% 
+  
+  #calculate the cumulative percentages
+  arrange(desc(visit_n)) %>% 
+  mutate(patient_cumpct = cumsum(patient_pct),
+         visit_cumpct = cumsum(visit_pct)) %>% 
+  
+  print()
+```
+
+```{r}
+patients_frequency_age %>%
+
+  #summarize percentage of visits of frequent and non-frequent patients
+
+  mutate(patient_type = case_when(visit_n >= 7 ~ "Frequent(>=7)",
+                                  visit_n < 7 ~ "Non-frequent(<7)")) %>%
+  
+  group_by(patient_type) %>%
+
+  summarise(pct_visit_total = sum(visit_pct),
+            pct_patient_total = sum(patient_pct)) %>%
+  
+  ggplot()+
+
+  aes(x = '',
+      y = pct_visit_total,
+      fill = patient_type) +
+
+  geom_col(position = "stack") +
+
+  scale_fill_brewer()+
+
+  geom_text(aes(label = paste0(pct_visit_total,"%")),
+            position = position_stack(vjust = 0.5)) +
+
+  coord_polar("y")+
+
+  theme_void()+
+
+  theme(axis.ticks = element_blank(),
+        axis.text = element_blank())+
+
+  labs(title = "% of Consultation by Patient Type - Under 8 or above 65",
+       x = NULL, y = NULL,
+       fill = "Patient Type")
+
+```
+
+```{r}
+#Filter data for just "others"
+patients_frequency_age_o <- patients_n_visits_5 %>%
+  
+  filter(age_group == "Others") %>% 
+  
+  #group the patients by their frequencies
+  group_by(visit_n) %>% 
+  
+  #count the total number of patients and visits in each group
+  summarise(patient_n = n(),
+            visit_total_n = sum(visit_n)) %>% 
+  
+  #calculate the percentages
+  mutate(patient_pct = round(patient_n/sum(patient_n)*100,2),
+         visit_pct = round(visit_total_n/sum(visit_total_n)*100,2)) %>% 
+  
+  #calculate the cumulative percentages
+  arrange(desc(visit_n)) %>% 
+  mutate(patient_cumpct = cumsum(patient_pct),
+         visit_cumpct = cumsum(visit_pct)) %>% 
+  
+  print()
+```
+
+```{r}
+patients_frequency_age_o %>%
+
+  #summarize percentage of visits of frequent and non-frequent patients
+
+  mutate(patient_type = case_when(visit_n >= 6 ~ "Frequent(>=6)",
+                                  visit_n < 6 ~ "Non-frequent(<6)")) %>%
+  
+  group_by(patient_type) %>%
+
+  summarise(pct_visit_total = sum(visit_pct),
+            pct_patient_total = sum(patient_pct)) %>%
+  
+  ggplot()+
+
+  aes(x = '',
+      y = pct_visit_total,
+      fill = patient_type) +
+
+  geom_col(position = "stack") +
+
+  scale_fill_brewer()+
+
+  geom_text(aes(label = paste0(pct_visit_total,"%")),
+            position = position_stack(vjust = 0.5)) +
+
+  coord_polar("y")+
+
+  theme_void()+
+
+  theme(axis.ticks = element_blank(),
+        axis.text = element_blank())+
+
+  labs(title = "% of Consultation by Patient Type - Others",
+       x = NULL, y = NULL,
+       fill = "Patient Type")
+
+```
+
+### Chronic Disease
+
+```{r}
+#Filter data for just people with chronic disease
+patients_frequency_disease <- patients_n_visits_5 %>%
+  
+  filter(n_disease > 0) %>% 
+  
+  #group the patients by their frequencies
+  group_by(visit_n) %>% 
+  
+  #count the total number of patients and visits in each group
+  summarise(patient_n = n(),
+            visit_total_n = sum(visit_n)) %>% 
+  
+  #calculate the percentages
+  mutate(patient_pct = round(patient_n/sum(patient_n)*100,2),
+         visit_pct = round(visit_total_n/sum(visit_total_n)*100,2)) %>% 
+  
+  #calculate the cumulative percentages
+  arrange(desc(visit_n)) %>% 
+  mutate(patient_cumpct = cumsum(patient_pct),
+         visit_cumpct = cumsum(visit_pct)) %>% 
+  
+  print()
+```
+
+```{r}
+patients_frequency_disease %>%
+
+  #summarize percentage of visits of frequent and non-frequent patients
+
+  mutate(patient_type = case_when(visit_n >= 7 ~ "Frequent(>=7)",
+                                  visit_n < 7 ~ "Non-frequent(<7)")) %>%
+  
+  group_by(patient_type) %>%
+
+  summarise(pct_visit_total = sum(visit_pct),
+            pct_patient_total = sum(patient_pct)) %>%
+  
+  ggplot()+
+
+  aes(x = '',
+      y = pct_visit_total,
+      fill = patient_type) +
+
+  geom_col(position = "stack") +
+
+  scale_fill_brewer()+
+
+  geom_text(aes(label = paste0(pct_visit_total,"%")),
+            position = position_stack(vjust = 0.5)) +
+
+  coord_polar("y")+
+
+  theme_void()+
+
+  theme(axis.ticks = element_blank(),
+        axis.text = element_blank())+
+
+  labs(title = "% of Consultation by Patient Type - With Chronic Disease",
+       x = NULL, y = NULL,
+       fill = "Patient Type")
+
+```
+
+```{r}
+#Filter data for just people without chronic disease
+patients_frequency_disease <- patients_n_visits_5 %>%
+  
+  filter(n_disease == 0) %>% 
+  
+  #group the patients by their frequencies
+  group_by(visit_n) %>% 
+  
+  #count the total number of patients and visits in each group
+  summarise(patient_n = n(),
+            visit_total_n = sum(visit_n)) %>% 
+  
+  #calculate the percentages
+  mutate(patient_pct = round(patient_n/sum(patient_n)*100,2),
+         visit_pct = round(visit_total_n/sum(visit_total_n)*100,2)) %>% 
+  
+  #calculate the cumulative percentages
+  arrange(desc(visit_n)) %>% 
+  mutate(patient_cumpct = cumsum(patient_pct),
+         visit_cumpct = cumsum(visit_pct)) %>% 
+  
+  print()
+```
+```{r}
+patients_frequency_disease %>%
+
+  #summarize percentage of visits of frequent and non-frequent patients
+
+  mutate(patient_type = case_when(visit_n >= 6 ~ "Frequent(>=6)",
+                                  visit_n < 6 ~ "Non-frequent(<6)")) %>%
+  
+  group_by(patient_type) %>%
+
+  summarise(pct_visit_total = sum(visit_pct),
+            pct_patient_total = sum(patient_pct)) %>%
+  
+  ggplot()+
+
+  aes(x = '',
+      y = pct_visit_total,
+      fill = patient_type) +
+
+  geom_col(position = "stack") +
+
+  scale_fill_brewer()+
+
+  geom_text(aes(label = paste0(pct_visit_total,"%")),
+            position = position_stack(vjust = 0.5)) +
+
+  coord_polar("y")+
+
+  theme_void()+
+
+  theme(axis.ticks = element_blank(),
+        axis.text = element_blank())+
+
+  labs(title = "% of Consultation by Patient Type - Without Chronic Disease",
+       x = NULL, y = NULL,
+       fill = "Patient Type")
+
+```
+
+### Registration Cohort
+
+```{r}
+#Filter data for just people in the "New" cohort
+patients_frequency_cohort <- patients_n_visits_5 %>%
+  
+  filter(cohort == "New") %>% 
+  
+  #group the patients by their frequencies
+  group_by(visit_n) %>% 
+  
+  #count the total number of patients and visits in each group
+  summarise(patient_n = n(),
+            visit_total_n = sum(visit_n)) %>% 
+  
+  #calculate the percentages
+  mutate(patient_pct = round(patient_n/sum(patient_n)*100,2),
+         visit_pct = round(visit_total_n/sum(visit_total_n)*100,2)) %>% 
+  
+  #calculate the cumulative percentages
+  arrange(desc(visit_n)) %>% 
+  mutate(patient_cumpct = cumsum(patient_pct),
+         visit_cumpct = cumsum(visit_pct)) %>% 
+  
+  print()
+```
+
+As we can see, new cohort does not appears to behave as the 10%-50% pattern we discussed before, therefore, we only filter for old cohort.
+
+
 
