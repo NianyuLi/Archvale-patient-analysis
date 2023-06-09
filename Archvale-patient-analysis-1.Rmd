@@ -148,7 +148,7 @@ patients_n_visits_3 <-
 Calculate the patient's GP frequencies to identify the frequent patients.
 
 ```{r}
-patients_frequency <- patients_n_visits_3 %>% 
+patients_frequency <- patients_n_visits_3 %>%
   
   #group the patients by their frequencies
   group_by(visit_n) %>% 
@@ -225,9 +225,17 @@ patients_n_visits_3 %>%
 ```{r}
 patients_n_visits_3 %>% 
   select(gender, cohort, visit_n) %>% 
-  ggpairs(aes(color = gender))
+  ggpairs(aes(fill = gender))+
+  scale_fill_manual(values = c("#001e62","#c6cddc"))
 ```
-We can tell that Age and Chronic Disease have significant positive correlations with frequency of consultations. It also varies in Gender and Registration Cohort.
+We can tell that Age and Chronic Disease have significant positive correlations with frequency of consultations. It also varies in Gender and Registration Cohort. Female tends to have higher number of consultations. New cohort tends to have lower number of consultations.
 
 ## Identify Inappropriate Users
+
+We make the following assumptions to identify the inappropriate users of GP services:
+
+ 1) They are frequent users of GP services.
+ 2) They 
+
+
 
