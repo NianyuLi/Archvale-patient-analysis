@@ -33,7 +33,6 @@ library(janitor)
 library(openxlsx)
 library(waterfalls)
 library(GGally)
-library(fastDummies)
 ```
 
 # Loading the data
@@ -84,6 +83,7 @@ patients_n_visits <-
 ```
 
 ## Age
+
 The age of the patient might affect their behaviour. As the time frame of the appoint record is not that long (only includes record of 2022-2023), we could assume the patient's age is this year minus the year of their birthday, though not 100% accurate.
 
 ```{r}
@@ -99,6 +99,7 @@ patients_n_visits_1 <-  patients_n_visits %>%
 ```
 
 ## Registration Cohort
+
 Patients who registered after March 2023 might have a different behaviour due to the implementation of a marketing campign. Create a new variable to show the registration cohort of the patients: people who registered before March 2023 are classified as in the `Old` cohort, whereas after March 2023 belongs to `New` cohort.
 
 ```{r}
@@ -115,6 +116,7 @@ patients_n_visits_2 <-  patients_n_visits_1 %>%
 ```
 
 ## Chronic Disease
+
 Patients with chronic diseases visits GP regularly. Create a new variable called chronic_disease to show the number of disease the patient have.
 
 ```{r}
@@ -141,7 +143,77 @@ patients_n_visits_3 <-
 
 ```
 
+## Average appointment time
+
+```{r}
+#| warning: false
+
+#Calculate the average appointment time for patients
+app_time <- appointment %>% 
+  group_by(patient_id) %>% 
+  summarise(avg_time = mean(as.integer(planned_appointment_duration)))
+
+#join it with the patients table
+patients_n_visits_4 <- left_join(x = patients_n_visits_3,
+                                 y = app_time,
+                                 by = "patient_id") %>% 
+  
+  #convert NA to 0
+  mutate(avg_time = replace_na(avg_time,0)) %>% 
+  
+  print()
+```
+
+
+## Average appointment intervals
+
+```{r}
+app_interval <- appointment %>% 
+  
+  #convert character to date
+  mutate(appointment_date = dmy(appointment_date)) %>%
+  
+  #group by patients
+  group_by(patient_id) %>% 
+  
+  #calculate average interval
+  summarise(app_interval_sum = max(appointment_date) - min(appointment_date),
+            visit_n = n()) %>% 
+  
+  mutate(app_interval = app_interval_sum/visit_n,
+         app_interval_int = as.numeric(app_interval)) %>% 
+  
+  #arrange the data
+  arrange(desc(app_interval)) %>%
+  
+  select(patient_id, app_interval_int)
+  
+  #Join it with patients table and omit NAs
+patients_n_visits_5 <- left_join(x = patients_n_visits_4,
+                                 y = app_interval,
+                                 by = "patient_id") %>% 
+  
+  #convert NA to 0
+  mutate(app_interval_int = replace_na(app_interval_int,0)) %>% 
+  
+  print()
+```
+
+
 # Data Analysis
+
+We make the following assumptions to identify the inappropriate users of GP services:
+
+1)  They are frequent users of GP services.
+
+2)  They are associate with potential inappropriate usage.
+
+    Features include:
+
+-   Shorter average planned time;
+-   Shorter Intervals between appointments;
+-   General Practice;
+-   Patients without chronic diseases.
 
 ## Identify Frequent Patients
 
@@ -215,7 +287,8 @@ patients_frequency %>%
 
 ## Testing the hypothesis
 
-Test the hypothesis: does GP frequencies have to do with Age/Gender/Chronic Disease/Registration Cohort. If there is a relationship, we might take that into consideration when we decide whether the patient has an appropriate clinical need. 
+Test the hypothesis: does GP frequencies have to do with Age/Gender/Chronic Disease/Registration Cohort. If there is a relationship, we might take that into consideration when we decide whether the patient has an appropriate clinical need.
+
 ```{r}
 patients_n_visits_3 %>% 
   select(age, n_disease, visit_n) %>% 
@@ -228,14 +301,12 @@ patients_n_visits_3 %>%
   ggpairs(aes(fill = gender))+
   scale_fill_manual(values = c("#001e62","#c6cddc"))
 ```
+
 We can tell that Age and Chronic Disease have significant positive correlations with frequency of consultations. It also varies in Gender and Registration Cohort. Female tends to have higher number of consultations. New cohort tends to have lower number of consultations.
 
-## Identify Inappropriate Users
+## Frequent patients by segments
 
-We make the following assumptions to identify the inappropriate users of GP services:
+People in different age/gender/registration cohort behave differently. Thus, different criteria is used to identify frequent patients.
 
- 1) They are frequent users of GP services.
- 2) They 
-
-
+### Gender
 
