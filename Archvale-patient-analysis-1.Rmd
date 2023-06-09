@@ -217,6 +217,8 @@ We make the following assumptions to identify the inappropriate users of GP serv
 
 ## Identify Frequent Patients
 
+### General Approach
+
 Calculate the patient's GP frequencies to identify the frequent patients.
 
 ```{r}
@@ -285,7 +287,7 @@ patients_frequency %>%
 
 ```
 
-## Testing the hypothesis
+### Testing the hypothesis
 
 Test the hypothesis: does GP frequencies have to do with Age/Gender/Chronic Disease/Registration Cohort. If there is a relationship, we might take that into consideration when we decide whether the patient has an appropriate clinical need.
 
@@ -304,11 +306,11 @@ patients_n_visits_3 %>%
 
 We can tell that Age and Chronic Disease have significant positive correlations with frequency of consultations. It also varies in Gender and Registration Cohort. Female tends to have higher number of consultations. New cohort tends to have lower number of consultations.
 
-## Frequent patients by segments
+### Refined Approach: Frequent patients by segments
 
 People in different age/gender/registration cohort behave differently. Thus, different criteria is used to identify frequent patients.
 
-### Gender
+#### Gender
 
 ```{r}
 #Filter data for just female
@@ -439,7 +441,7 @@ patients_frequency_m %>%
 
 ```
 
-### Age group
+#### Age group
 
 ```{r}
 #Assign patients to "Early_childhood(<8) and elderly(>65)" and "Others"
@@ -580,7 +582,7 @@ patients_frequency_age_o %>%
 
 ```
 
-### Chronic Disease
+#### Chronic Disease
 
 ```{r}
 #Filter data for just people with chronic disease
@@ -709,7 +711,7 @@ patients_frequency_disease %>%
 
 ```
 
-### Registration Cohort
+#### Registration Cohort
 
 ```{r}
 #Filter data for just people in the "New" cohort
@@ -736,7 +738,83 @@ patients_frequency_cohort <- patients_n_visits_5 %>%
   print()
 ```
 
-As we can see, new cohort does not appears to behave as the 10%-50% pattern we discussed before, therefore, we only filter for old cohort.
+```{r}
+#Filter data for just people in the "New" cohort
+patients_frequency_cohort_old <- patients_n_visits_5 %>%
+  
+  filter(cohort == "Old") %>% 
+  
+  #group the patients by their frequencies
+  group_by(visit_n) %>% 
+  
+  #count the total number of patients and visits in each group
+  summarise(patient_n = n(),
+            visit_total_n = sum(visit_n)) %>% 
+  
+  #calculate the percentages
+  mutate(patient_pct = round(patient_n/sum(patient_n)*100,2),
+         visit_pct = round(visit_total_n/sum(visit_total_n)*100,2)) %>% 
+  
+  #calculate the cumulative percentages
+  arrange(desc(visit_n)) %>% 
+  mutate(patient_cumpct = cumsum(patient_pct),
+         visit_cumpct = cumsum(visit_pct)) %>% 
+  
+  print()
+```
+
+As we can see, new cohort does not appears to behave as the 10%-50% pattern we discussed before, and 93% of the patients haven't visited GP, therefore, we only filter for old cohort to find inappropriate usage.
+
+## Filter for frequent patient
+
+```{r}
+patients_oldco <- patients_n_visits_5 %>% 
+  
+  #Filter only for old cohort
+  filter(cohort == "Old") %>% 
+  
+  print()
+```
+Now we filter for frequent patients in vulnerable groups, using the 7-times-visit criteria.
+```{r}
+patients_oldco_vul <- patients_oldco %>% 
+  
+  #filter vulnerable groups 
+  filter(gender == "Female" 
+  | age_group == "Under 8 or above 65"
+  | n_disease > 0) %>% 
+  
+  #filter for frequent patient
+  filter(visit_n >= 7) %>% 
+  
+  print()
+```
+Now we filter for frequent patients in none-vulnerable groups, using the 6-times-visit criteria.
+
+```{r}
+patients_oldco_nonevul <- patients_oldco %>% 
+  
+  filter(gender == "Male" 
+  & age_group == "Others"
+  & n_disease == 0) %>% 
+  
+  #filter for frequent patient
+  filter(visit_n >= 6) %>% 
+  
+  print()
+```
+We have a total of 142+22=164 patients. We now look at their appointment patterns to find the top 50 that are most likely to use GP inappropriately.
+
+## Identify inappropriate usage
+
+
+### Shorter average planned time
+
+### Shorter Intervals between appointments
+
+### General Practice
+
+### Patients without chronic diseases?
 
 
 
