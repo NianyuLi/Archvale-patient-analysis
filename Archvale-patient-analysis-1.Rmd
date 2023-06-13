@@ -3,10 +3,6 @@ title: "Archvale Data Analysis"
 author: "Nianyu Li"
 date: "`r Sys.Date()`"
 output:
-  word_document:
-    toc: yes
-  pdf_document:
-    toc: yes
   html_document:
     theme: flatly
     highlight: zenburn
@@ -14,6 +10,10 @@ output:
     toc: yes
     toc_float: yes
     code_folding: show
+  pdf_document:
+    toc: yes
+  word_document:
+    toc: yes
 ---
 
 ------------------------------------------------------------------------
@@ -285,13 +285,13 @@ patients_frequency %>%
 Test the hypothesis: does GP frequencies have to do with Age/Gender/Chronic Disease/Registration Cohort. If there is a relationship, we might take that into consideration when we decide whether the patient has an appropriate clinical need.
 
 ```{r}
-patients_n_visits_3 %>% 
+patients_n_visits_5 %>% 
   select(age, n_disease, visit_n) %>% 
   ggpairs()
 ```
 
 ```{r}
-patients_n_visits_3 %>% 
+patients_n_visits_5 %>% 
   select(gender, cohort, visit_n) %>% 
   ggpairs(aes(fill = gender))+
   scale_fill_manual(values = c("#001e62","#c6cddc"))
@@ -849,7 +849,17 @@ final_patient_list <- rbind(patients_oldco_nonevul_sus,
 #write.xlsx(final_patient_list, "final_patient_list.xlsx")
 
 ```
-
+Filter out the patients who are:
+ 1) under 8 and above 65
+ 2) with chronic disease
+ 3) in the new cohort
+```{r}
+patients_test <- patients_n_visits_5 %>% 
+  filter(age_group == "Others"
+         & n_disease == 0
+         & cohort == "Old") %>% 
+  print()
+```
 
 
 
